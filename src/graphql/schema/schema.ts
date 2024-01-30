@@ -1,49 +1,21 @@
 import gql from "graphql-tag";
+import movieSchema from "./movie";
+import userSchema from "./user";
 
-const typeDefs = gql`
-  type User {
-    id: ID!
-    name: String!
-    username: String!
-    age: Int!
-    nationality: String!
-    friends: [User]
-    favoriteMovies: [Movie]
-  }
-
-  type Movie {
-    id: ID!
-    name: String!
-    yearOfPublication: Int!
-    isInTheaters: Boolean!
-  }
+const baseSchema = gql`
+  scalar Date
 
   type Query {
-    users: [User!]!
-    user(id: ID!): User
-    movies: [Movie!]!
-    movie(name: String!): Movie
-  }
-
-  input CreateUserInput {
-    name: String!
-    username: String!
-    age: Int!
-    nationality: String!
-  }
-
-  input UpdateUserInput {
-    name: String
-    username: String
-    age: Int
-    nationality: String
+    _: Boolean
   }
 
   type Mutation {
-    createUser(input: CreateUserInput!): User!
-    updateUser(id: ID!, input: UpdateUserInput!): User!
-    deleteUser(id: ID!): User!
+    _: Boolean
+  }
+
+  type Subscription {
+    _: Boolean
   }
 `;
 
-export default typeDefs;
+export default [baseSchema, userSchema, movieSchema];

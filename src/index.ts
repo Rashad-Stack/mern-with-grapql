@@ -6,6 +6,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin
 import { buildSubgraphSchema } from "@apollo/subgraph";
 import cors from "cors";
 import express, { json } from "express";
+import resolvers from "./graphql/resolvers";
 import typeDefs from "./graphql/schema";
 import { connectDB } from "./models";
 
@@ -18,7 +19,7 @@ app.use(express.json());
 (async () => {
   try {
     const server = new ApolloServer({
-      schema: buildSubgraphSchema({ typeDefs }),
+      schema: buildSubgraphSchema({ typeDefs, resolvers }),
       plugins: [
         process.env.NODE_ENV === "production"
           ? ApolloServerPluginLandingPageDisabled()

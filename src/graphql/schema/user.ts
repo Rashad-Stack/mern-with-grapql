@@ -7,10 +7,10 @@ export default gql`
 
   type User {
     id: ID!
+    email: String!
     name: String!
     username: String!
     age: Int!
-    email: String!
     role: String!
     message: [Message]
   }
@@ -20,11 +20,11 @@ export default gql`
     email: String!
     username: String!
     age: Int!
+    password: String!
   }
 
   input UpdateUserInput {
     name: String
-    email: String
     username: String
     age: Int
   }
@@ -36,7 +36,7 @@ export default gql`
   }
 
   extend type Mutation {
-    createUser(input: CreateUserInput!): User!
+    createUser(input: CreateUserInput!): Boolean!
     login(email: String!, password: String!): Token!
     updateUser(id: ID!, input: UpdateUserInput!): User!
     deleteUser(id: ID!): Boolean!

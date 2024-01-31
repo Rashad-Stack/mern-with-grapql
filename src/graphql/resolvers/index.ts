@@ -6,6 +6,8 @@ const customScalarResolver = {
   Date: dateScalar,
 };
 
-console.log("userResolver", userResolver);
-
-export default { userResolver, customScalarResolver };
+export default {
+  // ...messageResolver,
+  ...userResolver,
+  ...customScalarResolver,
+};

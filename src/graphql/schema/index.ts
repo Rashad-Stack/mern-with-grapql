@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import movieSchema from "./movie";
+import messageSchema from "./message";
 import userSchema from "./user";
 
 const baseSchema = gql`
@@ -18,4 +18,4 @@ const baseSchema = gql`
   }
 `;
 
-export default [baseSchema, userSchema, movieSchema];
+export default [baseSchema, userSchema, messageSchema];

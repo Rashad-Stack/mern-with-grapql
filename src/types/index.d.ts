@@ -53,3 +53,7 @@ export type UserMutation = {
 export type UserSubscription = {
   user: User;
 };
+
+export type IMe = {
+  id: string;
+};

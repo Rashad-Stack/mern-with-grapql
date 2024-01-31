@@ -1,3 +1,5 @@
+import { GraphQLError } from "graphql";
+import { validateEmail } from "../../lib/utils";
 import User from "../../models/user";
 import { CreateUserArgs, LoginArgs, UpdateUserArgs } from "../../types";
 
@@ -10,8 +12,24 @@ export default {
       const user = await User.findById(id);
 
       if (!user) {
-        throw new Error(`No user with id: ${id}`);
+        throw new GraphQLError(`No user with id: ${id}`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        });
       }
+
+      return user;
+    },
+
+    me: async (_: any, args: { id: string }, { me }: any) => {
+      const user = me;
+      if (!user)
+        throw new GraphQLError("You are not authorized.", {
+          extensions: {
+            code: "UNAUTHENTICATED",
+          },
+        });
 
       return user;
     },
@@ -21,25 +39,36 @@ export default {
     createUser: async (_: any, args: CreateUserArgs) => {
       const { name, email, username, password, age } = args.input;
 
-      await User.create({ name, email, username, password, age });
-      return true;
+      const user = await User.create({ name, email, username, password, age });
+      const token = user.generateAuthToken();
+
+      return { token };
     },
 
     login: async (_: any, args: LoginArgs) => {
       const { email, password } = args;
-      const user = await User.findOne({ email });
+      const query = validateEmail(email) ? { email } : { username: email };
+      const user = await User.findOne(query);
 
       if (!user) {
-        throw new Error(`No user with email: ${email}`);
+        throw new GraphQLError(
+          `No user with: ${validateEmail(email) ? "email " + email : "username " + email}`,
+          {
+            extensions: {
+              code: "NOT_FOUND",
+            },
+          },
+        );
       }
 
-      const isPasswordCorrect = await user.correctPassword(
-        password,
-        user.password,
-      );
+      const isPasswordCorrect = await user.comparePassword(password);
 
       if (!isPasswordCorrect) {
-        throw new Error("Incorrect password");
+        throw new GraphQLError("Incorrect password", {
+          extensions: {
+            code: "UNAUTHENTICATED",
+          },
+        });
       }
 
       const token = user.generateAuthToken();
@@ -47,28 +76,62 @@ export default {
       return { token };
     },
 
-    updateUser: async (_: any, args: UpdateUserArgs) => {
+    updateUser: async (_: any, args: UpdateUserArgs, { me }: any) => {
       const id = args.id;
       const { name, username, age } = args.input;
-      const user = await User.findByIdAndUpdate(id, {
-        name,
-        username,
-        age,
-      });
+
+      if (!me || me.role !== "admin")
+        throw new GraphQLError(
+          "You are not authorized to perform this action.",
+          {
+            extensions: {
+              code: "FORBIDDEN",
+            },
+          },
+        );
+
+      const user = await User.findByIdAndUpdate(
+        id,
+        {
+          name,
+          username,
+          age,
+        },
+        { new: true },
+      );
 
       if (!user) {
-        throw new Error(`No user with id: ${id}`);
+        throw new GraphQLError(`No user with id: ${id}`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        });
       }
 
       return user;
     },
 
-    deleteUser: async (_: any, args: { id: string }) => {
+    deleteUser: async (_: any, args: { id: string }, { me }: any) => {
       const { id } = args;
+
+      if (!me || me.role !== "admin")
+        throw new GraphQLError(
+          "You are not authorized to perform this action.",
+          {
+            extensions: {
+              code: "FORBIDDEN",
+            },
+          },
+        );
+
       const user = await User.findByIdAndDelete(id);
 
       if (!user) {
-        throw new Error(`No user with id: ${id}`);
+        throw new GraphQLError(`No user with id: ${id}`, {
+          extensions: {
+            code: "NOT_FOUND",
+          },
+        });
       }
 
       return true;

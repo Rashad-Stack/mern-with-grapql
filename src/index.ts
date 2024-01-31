@@ -5,11 +5,14 @@ import { ApolloServerPluginInlineTrace } from "@apollo/server/plugin/inlineTrace
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { buildSubgraphSchema } from "@apollo/subgraph";
 import cors from "cors";
+import dotenv from "dotenv";
 import express, { json } from "express";
+import jwt from "jsonwebtoken";
 import resolvers from "./graphql/resolvers";
 import typeDefs from "./graphql/schema";
 import { connectDB } from "./models";
 
+dotenv.config();
 const PORT = process.env.PORT || 3000;
 const app = express();
 
@@ -31,7 +34,23 @@ app.use(express.json());
     // instance before passing the instance to `expressMiddleware`
     await server.start();
     await connectDB();
-    app.use("/graphql", cors(), json(), expressMiddleware(server));
+    app.use(
+      "/graphql",
+      cors(),
+      json(),
+      expressMiddleware(server, {
+        context: async ({ req }) => {
+          try {
+            const Token = req.headers.authorization || "";
+
+            const me = await jwt.verify(Token, process.env.JWT_SECRET!);
+            return { me };
+          } catch (error) {
+            return { me: null };
+          }
+        },
+      }),
+    );
   } catch (error) {
     app.use("/", (req, res) => res.send(String(error)));
     console.log(error);

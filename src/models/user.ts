@@ -1,7 +1,11 @@
 import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
 import { Document, Schema, model, models } from "mongoose";
 import { validateEmail } from "../lib/utils";
 import Message from "./message";
+
+dotenv.config();
 
 const UserSchema = new Schema(
   {
@@ -34,8 +38,8 @@ const UserSchema = new Schema(
 );
 
 UserSchema.pre("save", async function (next) {
-  //   Hash the password with coast of 12
-  this.password = await bcrypt.hash(this.password, 12);
+  const salt = bcrypt.genSaltSync(10);
+  this.password = bcrypt.hashSync(this.password, salt);
 
   next();
 });
@@ -46,11 +50,16 @@ UserSchema.pre(/^remove/, async function (next) {
   next();
 });
 
-UserSchema.methods.correctPassword = async function (
+UserSchema.methods.comparePassword = async function (
   candidatePassword: string,
-  userPassword: string,
 ) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
+UserSchema.methods.generateAuthToken = function () {
+  return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET!, {
+    expiresIn: process.env.JWT_EXPIRES_IN!,
+  });
 };
 
 const User = models.User || model("User", UserSchema);

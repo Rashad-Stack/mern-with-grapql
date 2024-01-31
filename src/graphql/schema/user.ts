@@ -36,7 +36,7 @@ export default gql`
   }
 
   extend type Mutation {
-    createUser(input: CreateUserInput!): Boolean!
+    createUser(input: CreateUserInput!): Token!
     login(email: String!, password: String!): Token!
     updateUser(id: ID!, input: UpdateUserInput!): User!
     deleteUser(id: ID!): Boolean!
